@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ku">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>خۆ تۆمارکردن - OTP</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            width: 350px;
+        }
+        h2 {
+            text-align: center;
+            color: #333;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .message {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 5px;
+            display: none;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>خۆ تۆمارکردن</h2>
+        <form id="signupForm">
+            <input type="text" id="userName" placeholder="ناوی بەکارهێنەر" required>
+            <input type="email" id="email" placeholder="ئیمەیڵ" required>
+            <input type="password" id="password" placeholder="پاسوۆرد" required>
+            <button type="submit">تۆمارکردن و ناردنی OTP</button>
+        </form>
+        <div id="message" class="message"></div>
+    </div>
+
+    <script>
+        // کلیلەکانی EmailJS
+        const SERVICE_ID = 'service_0mgxo9b';
+        const TEMPLATE_ID = 'template_vgzbgin';
+        const PUBLIC_KEY = 'B0v39HGtjKuVbFu6R';
+        const PRIVATE_KEY = '2NYM1Da9MBZ8_dqEBVRfg';
+
+        function generateOtp() {
+            return Math.floor(100000 + Math.random() * 900000).toString();
+        }
+
+        async function sendOtp(email, otp) {
+            try {
+                const response = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        service_id: SERVICE_ID,
+                        template_id: TEMPLATE_ID,
+                        user_id: PUBLIC_KEY,
+                        accessToken: PRIVATE_KEY,
+                        template_params: {
+                            to_email: email,
+                            otp: otp
+                        }
+                    })
+                });
+
+                if (response.status === 200) {
+                    return { success: true };
+                } else {
+                    const text = await response.text();
+                    return { success: false, error: text };
+                }
+            } catch (error) {
+                return { success: false, error: error.message };
+            }
+        }
+
+        document.getElementById('signupForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const userName = document.getElementById('userName').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const messageDiv = document.getElementById('message');
+            
+            const otp = generateOtp();
+            
+            messageDiv.style.display = 'block';
+            messageDiv.className = 'message';
+            messageDiv.textContent = '⏳ چاوەڕێ بە... OTP دەنێردرێت...';
+            
+            const result = await sendOtp(email, otp);
+            
+            if (result.success) {
+                messageDiv.className = 'message success';
+                messageDiv.innerHTML = `✅ OTP بە سەرکەوتوویی نێردرا بۆ ${email}<br>📧 کۆدی OTP: ${otp}<br>🔐 تکایە ئەم کۆدە بۆ پشتڕاستکردنەوە بەکاربهێنە.`;
+                
+                // پاشەکەوتی کردن لە localStorage بۆ پەڕەی verify
+                localStorage.setItem('tempEmail', email);
+                localStorage.setItem('tempOtp', otp);
+                localStorage.setItem('tempUserName', userName);
+                
+                // دوای 3 چرکە بچۆ بۆ پەڕەی پشتڕاستکردنەوە
+                setTimeout(() => {
+                    window.location.href = 'verify.html';
+                }, 3000);
+            } else {
+                messageDiv.className = 'message error';
+                messageDiv.innerHTML = `❌ هەڵە: ${result.error}<br>تکایە دووبارە هەوڵبدەوە.`;
+            }
+        });
+    </script>
+</body>
+</html>
