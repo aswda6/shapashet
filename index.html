@@ -192,12 +192,9 @@
 
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <script>
-        // ==================== هێڵەکانی ژێرەوە بە باشی پێناسە کراون ====================
-        // ئەم نرخانە کە تۆ پێداوین، بە شێوەی "دەق" (string) دەستنیشان کراون
         const SERVICE_ID = 'service_0mgxo9b';
         const PUBLIC_KEY = 'B0v39HGtjKuVbFu6R';
         const TEMPLATE_ID = 'template_vgzbgin';
-        // ===========================================================================
 
         let generatedOtp = "";
         let verifiedEmail = "";
@@ -205,7 +202,6 @@
         let countdownTimer = null;
         let canResend = true;
 
-        // EmailJS ئاگادارکردنەوە بە بەکارهێنانی کلیلی گشتی (Public Key)
         (function() {
             emailjs.init(PUBLIC_KEY);
             console.log("EmailJS initialized");
@@ -284,11 +280,7 @@
                     message: `کۆدی پشتڕاستکردنەوەی تۆ: ${generatedOtp}\nئەم کۆدە بۆ 5 خولەک دروستە.`
                 };
                 
-                // ==================== ئەم هێڵە ڕاست کرایەوە ====================
-                // ئێستا ناوی گۆڕاوەکان (SERVICE_ID و TEMPLATE_ID) کە لە سەرەوە پێناسە کراون بەکاردەهێنێت
                 const response = await emailjs.send(SERVICE_ID, TEMPLATE_ID, templateParams);
-                // ===========================================================
-                
                 console.log('EmailJS response:', response);
                 
                 showMessage(`✅ کۆد بە سەرکەوتوویی نێردرا بۆ ${email}`, 'success');
@@ -301,25 +293,33 @@
             }
         }
 
-        // ناردنی OTP
+        // ========== ئەم دوو بەشە چارەسەر کراون ==========
+        
+        // ناردنی یەکەم جار (send)
         document.getElementById('sendOtpBtn').onclick = async () => {
-            const email = document.getElementById('userEmail').value;
-            await sendOTP(email, false);
-        };
-
-        // دووبارە ناردن
-        document.getElementById('resendBtn').onclick = async () => {
-            if(!canResend) {
-                showMessage('تکایە چاوەڕێ بە پێش دووبارە ناردن', 'info');
-                return;
-            }
             const email = document.getElementById('userEmail').value;
             if(!email) {
                 showMessage('تکایە ئیمەیڵەکەت بنووسە', 'error');
                 return;
             }
+            await sendOTP(email, false);
+        };
+
+        // دووبارە ناردن (resend)
+        document.getElementById('resendBtn').onclick = async () => {
+            const email = document.getElementById('userEmail').value;
+            if(!email) {
+                showMessage('تکایە ئیمەیڵەکەت بنووسە', 'error');
+                return;
+            }
+            if(!canResend) {
+                showMessage('تکایە چاوەڕێ بە پێش دووبارە ناردن', 'info');
+                return;
+            }
             await sendOTP(email, true);
         };
+        
+        // ================================================
 
         // پشتڕاستکردنەوەی OTP و ڕەوانەکردن بۆ پەڕەی دواتر
         document.getElementById('verifyBtn').onclick = () => {
