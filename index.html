@@ -195,7 +195,7 @@
         // EmailJS Config
         const SERVICE_ID = 'service_0mgxo9b';
         const PUBLIC_KEY = 'B0v39HGtjKuVbFu6R';
-        const TEMPLATE_ID = 'YOUR_TEMPLATE_ID'; // <-- پێویستە لە EmailJS دەستکاری بکەیت!
+        const TEMPLATE_ID = 'template_vgzbgin'; // <-- پێویستە لە EmailJS دەستکاری بکەیت!
 
         let generatedOtp = "";
         let verifiedEmail = "";
@@ -282,7 +282,7 @@
                     message: `کۆدی پشتڕاستکردنەوەی تۆ: ${generatedOtp}\nئەم کۆدە بۆ 5 خولەک دروستە.`
                 };
                 
-                const response = await emailjs.send(SERVICE_ID, TEMPLATE_ID, templateParams);
+                const response = await emailjs.send(service_0mgxo9b, template_vgzbgin, templateParams);
                 console.log('EmailJS response:', response);
                 
                 showMessage(`✅ کۆد بە سەرکەوتوویی نێردرا بۆ ${email}`, 'success');
