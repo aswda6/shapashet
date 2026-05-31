@@ -1,154 +1,119 @@
 <!DOCTYPE html>
-<html dir="rtl" lang="ku">
+<html lang="ckb">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>خۆ تۆمارکردن - OTP</title>
+    <title>OTP لە ڕێگەی ئیمەیڵ - MailJS</title>
+    <!-- MailJS SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@mailjs/sdk@latest/dist/mailjs.umd.js"></script>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            background: #f4f4f4;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f2f5;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
             margin: 0;
         }
-        .container {
+        .card {
             background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
             width: 350px;
-        }
-        h2 {
             text-align: center;
-            color: #333;
         }
-        input {
-            width: 100%;
-            padding: 10px;
-            margin: 10px 0;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            box-sizing: border-box;
-        }
-        button {
+        input, button {
             width: 100%;
             padding: 12px;
-            background: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
+            margin: 8px 0;
+            border-radius: 8px;
+            border: 1px solid #ccc;
             font-size: 16px;
         }
+        button {
+            background-color: #4361ee;
+            color: white;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+            transition: 0.2s;
+        }
         button:hover {
-            background: #45a049;
+            background-color: #3a56d4;
         }
         .message {
             margin-top: 15px;
-            padding: 10px;
-            border-radius: 5px;
-            display: none;
-        }
-        .success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
+            font-size: 14px;
+            color: #2d6a4f;
         }
         .error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
+            color: #d62828;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h2>خۆ تۆمارکردن</h2>
-        <form id="signupForm">
-            <input type="text" id="userName" placeholder="ناوی بەکارهێنەر" required>
-            <input type="email" id="email" placeholder="ئیمەیڵ" required>
-            <input type="password" id="password" placeholder="پاسوۆرد" required>
-            <button type="submit">تۆمارکردن و ناردنی OTP</button>
-        </form>
-        <div id="message" class="message"></div>
-    </div>
 
-    <script>
-        // کلیلەکانی EmailJS
-        const SERVICE_ID = 'service_0mgxo9b';
-        const TEMPLATE_ID = 'template_vgzbgin';
-        const PUBLIC_KEY = 'B0v39HGtjKuVbFu6R';
-        const PRIVATE_KEY = '2NYM1Da9MBZ8_dqEBVRfg';
+<div class="card">
+    <h2>🔐 ناردنی OTP</h2>
+    <p>ئیمەیڵەکەت بنووسە</p>
+    <input type="email" id="emailInput" placeholder="example@domain.com">
+    <button id="sendOtpBtn">ناردنی OTP</button>
+    <div id="statusMessage" class="message"></div>
+</div>
 
-        function generateOtp() {
-            return Math.floor(100000 + Math.random() * 900000).toString();
+<script>
+    // 📌 Public Key ـت لێرە دابنێ (ئاسایی و خاوێن)
+    const MAILJS_PUBLIC_KEY = "your_public_key_here"; // Public Keyـت لە MailJS بگرە
+
+    // 🧪 دروستکردنی OTP (6 ژمارە)
+    function generateOTP() {
+        return Math.floor(100000 + Math.random() * 900000).toString();
+    }
+
+    document.getElementById("sendOtpBtn").onclick = async () => {
+        const email = document.getElementById("emailInput").value;
+        const messageDiv = document.getElementById("statusMessage");
+
+        if (!email) {
+            messageDiv.innerText = "❌ تکایە ئیمەیڵ بنووسە";
+            messageDiv.className = "message error";
+            return;
         }
 
-        async function sendOtp(email, otp) {
-            try {
-                const response = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        service_id: SERVICE_ID,
-                        template_id: TEMPLATE_ID,
-                        user_id: PUBLIC_KEY,
-                        accessToken: PRIVATE_KEY,
-                        template_params: {
-                            to_email: email,
-                            otp: otp
-                        }
-                    })
-                });
+        // دروستکردنی OTP
+        const otpCode = generateOTP();
 
-                if (response.status === 200) {
-                    return { success: true };
-                } else {
-                    const text = await response.text();
-                    return { success: false, error: text };
-                }
-            } catch (error) {
-                return { success: false, error: error.message };
-            }
-        }
+        // ئامادەکردنی MailJS Client
+        const mailjs = new MailJS(MAILJS_PUBLIC_KEY);
 
-        document.getElementById('signupForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const userName = document.getElementById('userName').value;
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            const messageDiv = document.getElementById('message');
-            
-            const otp = generateOtp();
-            
-            messageDiv.style.display = 'block';
-            messageDiv.className = 'message';
-            messageDiv.textContent = '⏳ چاوەڕێ بە... OTP دەنێردرێت...';
-            
-            const result = await sendOtp(email, otp);
-            
-            if (result.success) {
-                messageDiv.className = 'message success';
-                messageDiv.innerHTML = `✅ OTP بە سەرکەوتوویی نێردرا بۆ ${email}<br>📧 کۆدی OTP: ${otp}<br>🔐 تکایە ئەم کۆدە بۆ پشتڕاستکردنەوە بەکاربهێنە.`;
-                
-                // پاشەکەوتی کردن لە localStorage بۆ پەڕەی verify
-                localStorage.setItem('tempEmail', email);
-                localStorage.setItem('tempOtp', otp);
-                localStorage.setItem('tempUserName', userName);
-                
-                // دوای 3 چرکە بچۆ بۆ پەڕەی پشتڕاستکردنەوە
-                setTimeout(() => {
-                    window.location.href = 'verify.html';
-                }, 3000);
+        // ناردنی ئیمەیڵ بە MailJS
+        try {
+            const sendResult = await mailjs.send({
+                from: "your_verified_email@example.com", // ئیمەیڵێک کە لە MailJS پشتڕاستکراوە
+                to: email,
+                subject: "کۆدی پشتڕاستکردنەوەی OTP",
+                text: `OTP کۆدەکەت بریتییە لە: ${otpCode}\nئەم کۆدە 10 خولەک کارادەکات.`,
+                html: `<h3>سڵاو</h3><p>کۆدی OTP: <strong>${otpCode}</strong></p><p>تکایە لە ماوەی ١٠ خولەکدا بەکاری بهێنە.</p>`
+            });
+
+            if (sendResult.status === 200 || sendResult.success) {
+                messageDiv.innerText = `✅ OTP (${otpCode}) بۆ ${email} نێردرا! (تەنها لە console ببینرێت بۆ تاقیکردنەوە)`;
+                messageDiv.className = "message";
+                // لە رێڕاستدا OTP بۆ Backend بنێرە بۆ پشتڕاستکردنەوە
+                console.log("OTP نێردرا:", otpCode);
             } else {
-                messageDiv.className = 'message error';
-                messageDiv.innerHTML = `❌ هەڵە: ${result.error}<br>تکایە دووبارە هەوڵبدەوە.`;
+                messageDiv.innerText = "❌ هەڵە لە ناردنی ئیمەیڵ. دڵنیابە لە Public Key و ئیمەیڵی نێردراو.";
+                messageDiv.className = "message error";
             }
-        });
-    </script>
+        } catch (err) {
+            console.error(err);
+            messageDiv.innerText = "❌ پەیوەندی بە MailJS ڕوونەکرد. Public Key و ناوی ئیمەیڵی ڕەوانەکەر (from) بپشکنە.";
+            messageDiv.className = "message error";
+        }
+    };
+</script>
+
 </body>
 </html>
