@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="ku">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>پشتڕاستکردنەوەی OTP</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            direction: rtl;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            padding: 40px;
+            width: 90%;
+            max-width: 450px;
+            text-align: center;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+            text-align: right;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s;
+            text-align: center;
+            font-size: 24px;
+            letter-spacing: 5px;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .message {
+            margin-top: 20px;
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+
+        .message.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+            display: block;
+        }
+
+        .countdown {
+            margin-top: 15px;
+            font-size: 12px;
+            color: #888;
+        }
+
+        .resend-btn {
+            background: transparent;
+            color: #667eea;
+            margin-top: 10px;
+            box-shadow: none;
+            padding: 8px;
+            font-size: 14px;
+        }
+
+        .resend-btn:hover {
+            background: #f0f0f0;
+            transform: none;
+        }
+
+        hr {
+            margin: 20px 0;
+            border: none;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .otp-input {
+            font-size: 32px;
+            letter-spacing: 8px;
+            font-weight: bold;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 پشتڕاستکردنەوە</h1>
+        <div class="subtitle">کۆدی پشتڕاستکردنەوە بنێرە بۆ ئیمەیڵەکەت</div>
+
+        <div class="input-group">
+            <label>📧 ئیمەیڵ:</label>
+            <input type="email" id="userEmail" placeholder="نمونە@example.com">
+        </div>
+
+        <button id="sendOtpBtn">📨 ناردنی کۆدی OTP</button>
+
+        <hr>
+
+        <div class="input-group">
+            <label>🔢 کۆدی 6 ژمارە:</label>
+            <input type="text" id="otpCode" class="otp-input" placeholder="••••••" maxlength="6" autocomplete="off">
+        </div>
+
+        <button id="verifyBtn">✅ پشتڕاستکردنەوە و چوون بۆ پەڕەی دواتر</button>
+
+        <div id="message" class="message"></div>
+        <div id="countdown" class="countdown"></div>
+        
+        <button id="resendBtn" class="resend-btn" style="display: none;">🔄 دووبارە ناردنی کۆد</button>
+    </div>
+
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <script>
+        // EmailJS Config
+        const SERVICE_ID = 'service_0mgxo9b';
+        const PUBLIC_KEY = 'B0v39HGtjKuVbFu6R';
+        const TEMPLATE_ID = 'YOUR_TEMPLATE_ID'; // <-- پێویستە لە EmailJS دەستکاری بکەیت!
+
+        let generatedOtp = "";
+        let verifiedEmail = "";
+        let otpTimer = null;
+        let countdownTimer = null;
+        let canResend = true;
+
+        // EmailJS ئاگادارکردنەوە
+        (function() {
+            emailjs.init(PUBLIC_KEY);
+            console.log("EmailJS initialized");
+        })();
+
+        function showMessage(msg, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = msg;
+            messageDiv.className = `message ${type}`;
+            setTimeout(() => {
+                if(messageDiv.className === `message ${type}`) {
+                    messageDiv.style.display = 'none';
+                    messageDiv.className = 'message';
+                }
+            }, 5000);
+        }
+
+        function startCountdown(seconds) {
+            let remaining = seconds;
+            const countdownDiv = document.getElementById('countdown');
+            const sendBtn = document.getElementById('sendOtpBtn');
+            const resendBtn = document.getElementById('resendBtn');
+            
+            if(countdownTimer) clearInterval(countdownTimer);
+            
+            canResend = false;
+            sendBtn.disabled = true;
+            resendBtn.style.display = 'block';
+            resendBtn.disabled = true;
+            
+            countdownTimer = setInterval(() => {
+                if(remaining <= 0) {
+                    clearInterval(countdownTimer);
+                    countdownDiv.textContent = '';
+                    canResend = true;
+                    sendBtn.disabled = false;
+                    resendBtn.disabled = false;
+                    resendBtn.style.opacity = '1';
+                } else {
+                    countdownDiv.textContent = `⏱️ چاوەڕێ بە ${remaining} چرکە بۆ ناردنەوە`;
+                    remaining--;
+                }
+            }, 1000);
+        }
+
+        function generateOTP() {
+            return Math.floor(100000 + Math.random() * 900000).toString();
+        }
+
+        async function sendOTP(email, isResend = false) {
+            if(!email) {
+                showMessage('تکایە ئیمەیڵەکەت بنووسە', 'error');
+                return false;
+            }
+            
+            if(!email.includes('@') || !email.includes('.')) {
+                showMessage('ئیمەیڵەکەت نادروستە', 'error');
+                return false;
+            }
+
+            const newOtp = generateOTP();
+            generatedOtp = newOtp;
+            
+            if(otpTimer) clearTimeout(otpTimer);
+            otpTimer = setTimeout(() => {
+                generatedOtp = "";
+                showMessage('کۆدی OTP بەسەرچوو، تکایە دووبارە بنێرە', 'info');
+            }, 300000);
+
+            showMessage('📤 کۆد دەنێردرێت...', 'info');
+
+            try {
+                const templateParams = {
+                    to_email: email,
+                    otp_code: generatedOtp,
+                    message: `کۆدی پشتڕاستکردنەوەی تۆ: ${generatedOtp}\nئەم کۆدە بۆ 5 خولەک دروستە.`
+                };
+                
+                const response = await emailjs.send(SERVICE_ID, TEMPLATE_ID, templateParams);
+                console.log('EmailJS response:', response);
+                
+                showMessage(`✅ کۆد بە سەرکەوتوویی نێردرا بۆ ${email}`, 'success');
+                startCountdown(60);
+                return true;
+            } catch(error) {
+                console.error('EmailJS error:', error);
+                showMessage(`❌ ناردن سەرکەوتوو نەبوو: ${error.text || 'تکایە Template ID پشتڕاست بکەوە'}`, 'error');
+                return false;
+            }
+        }
+
+        // ناردنی OTP
+        document.getElementById('sendOtpBtn').onclick = async () => {
+            const email = document.getElementById('userEmail').value;
+            await sendOTP(email, false);
+        };
+
+        // دووبارە ناردن
+        document.getElementById('resendBtn').onclick = async () => {
+            if(!canResend) {
+                showMessage('تکایە چاوەڕێ بە پێش دووبارە ناردن', 'info');
+                return;
+            }
+            const email = document.getElementById('userEmail').value;
+            if(!email) {
+                showMessage('تکایە ئیمەیڵەکەت بنووسە', 'error');
+                return;
+            }
+            await sendOTP(email, true);
+        };
+
+        // پشتڕاستکردنەوەی OTP و ڕەوانەکردن بۆ پەڕەی دواتر
+        document.getElementById('verifyBtn').onclick = () => {
+            const userOtp = document.getElementById('otpCode').value;
+            const email = document.getElementById('userEmail').value;
+            
+            if(!userOtp) {
+                showMessage('تکایە کۆدی 6 ژمارە بنووسە', 'error');
+                return;
+            }
+            
+            if(userOtp.length !== 6) {
+                showMessage('تکایە 6 ژمارە تەواو بنووسە', 'error');
+                return;
+            }
+            
+            if(!generatedOtp) {
+                showMessage('کۆدی OTP بەسەرچووە یان نێردراوە، تکایە دووبارە بنێرە', 'error');
+                return;
+            }
+            
+            if(userOtp === generatedOtp) {
+                verifiedEmail = email;
+                // ئیمەیڵ و OTP لە LocalStorage هەڵگرە بۆ پەڕەی دواتر
+                localStorage.setItem('verifiedEmail', email);
+                localStorage.setItem('isVerified', 'true');
+                
+                showMessage(`✅ پشتڕاستکرایەوە! ئێستا دەچیتە پەڕەی دواتر...`, 'success');
+                
+                // دوای 1 چرکە بڕۆ بۆ پەڕەی دواتر
+                setTimeout(() => {
+                    window.location.href = 'dashboard.html';
+                }, 1000);
+            } else {
+                showMessage(`❌ کۆدەکە هەڵەیە! تکایە هەوڵبدەرەوە`, 'error');
+                document.getElementById('otpCode').value = '';
+            }
+        };
+
+        // ئۆتۆماتیکی پەڕاندن بۆ کادری OTP
+        document.getElementById('otpCode').addEventListener('input', function(e) {
+            this.value = this.value.replace(/[^0-9]/g, '').slice(0, 6);
+        });
+    </script>
+</body>
+</html>
