@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="ku">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>داشبۆرد - پەڕەی تایبەت</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: white;
+            padding: 20px 40px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .logout-btn {
+            background: #ff4757;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .logout-btn:hover {
+            background: #ff3838;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 50px auto;
+            padding: 0 20px;
+        }
+
+        .welcome-card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+        }
+
+        .welcome-card h1 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 32px;
+        }
+
+        .welcome-card p {
+            color: #666;
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+
+        .email-badge {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 50px;
+            display: inline-block;
+            font-size: 16px;
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 22px;
+        }
+
+        .card p {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .protected {
+            border-left: 4px solid #ff4757;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .container {
+            animation: fadeIn 0.5s ease-out;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div class="logo">🔐 ویبسایتی تایبەت</div>
+        <button class="logout-btn" onclick="logout()">🚪 دەرچوون</button>
+    </div>
+
+    <div class="container">
+        <div class="welcome-card">
+            <h1>🎉 بەخێربێیت!</h1>
+            <p>تۆ بە سەرکەوتوویی پشتڕاستکرایتەوە و چوویتە ناو پەڕەی تایبەتەوە</p>
+            <div class="email-badge" id="userEmailDisplay">باربار دەکرێت...</div>
+        </div>
+
+        <div class="content-grid">
+            <div class="card">
+                <h3>📊 زانیاری تایبەت</h3>
+                <p>ئەمە پەڕەیەکە کە تەنها دوای پشتڕاستکردنەوەی OTP دەبینرێت. هیچ کەسێک ناتوانێت بەبێ کۆدی پشتڕاستکراو بگاتە ئێرە.</p>
+            </div>
+
+            <div class="card protected">
+                <h3>🔒 ناوەڕۆکی پارێزراو</h3>
+                <p>ئەم ناوەڕۆکە تەنها بۆ ئەو بەکارهێنەرانەیە کە ئیمەیڵەکەیان پشتڕاست کردووەتەوە. زانیاری تایبەتی تۆ لێرە دەردەکەوێت.</p>
+            </div>
+
+            <div class="card">
+                <h3>✅ دۆخی پشتڕاستکراو</h3>
+                <p>تۆ بە سەرکەوتوویی ناسنامەکەت پشتڕاست کردەوە. ئێستا دەتوانیت هەموو خزمەتگوزارییەکانی ماڵپەڕەکە بەکاربهێنیت.</p>
+            </div>
+
+            <div class="card">
+                <h3>📅 کاتی چوونەژوورەوە</h3>
+                <p id="loginTime">باربار دەکرێت...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // چککردنی ئەگەر بەکارهێنەر پشتڕاستکرابێت یان نا
+        window.onload = () => {
+            const isVerified = localStorage.getItem('isVerified');
+            const email = localStorage.getItem('verifiedEmail');
+            
+            if(!isVerified || isVerified !== 'true') {
+                // ئەگەر پشتڕاست نەکرابێتەوە، بیگەڕێنەوە بۆ پەڕەی سەرەکی
+                window.location.href = 'index.html';
+                return;
+            }
+            
+            // نیشاندانی ئیمەیڵ
+            document.getElementById('userEmailDisplay').innerHTML = `📧 ${email}`;
+            
+            // نیشاندانی کاتی چوونەژوورەوە
+            const now = new Date();
+            document.getElementById('loginTime').innerHTML = `${now.toLocaleDateString('ku')} - ${now.toLocaleTimeString('ku')}`;
+        };
+        
+        // فەنکشنی دەرچوون
+        function logout() {
+            localStorage.removeItem('isVerified');
+            localStorage.removeItem('verifiedEmail');
+            window.location.href = 'index.html';
+        }
+        
+        // ڕێگرتن لە گەڕانەوە بۆ پەڕەی پێشوو دوای logout
+        window.addEventListener('pageshow', (event) => {
+            if(event.persisted) {
+                const isVerified = localStorage.getItem('isVerified');
+                if(!isVerified || isVerified !== 'true') {
+                    window.location.href = 'index.html';
+                }
+            }
+        });
+    </script>
+</body>
+</html>
