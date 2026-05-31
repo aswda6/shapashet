@@ -195,7 +195,7 @@
         // EmailJS Config
         const SERVICE_ID = 'service_0mgxo9b';
         const PUBLIC_KEY = 'B0v39HGtjKuVbFu6R';
-        const TEMPLATE_ID = 'template_vgzbgin'; // <-- پێویستە لە EmailJS دەستکاری بکەیت!
+        const TEMPLATE_ID = 'template_vgzbgin';
 
         let generatedOtp = "";
         let verifiedEmail = "";
@@ -282,7 +282,8 @@
                     message: `کۆدی پشتڕاستکردنەوەی تۆ: ${generatedOtp}\nئەم کۆدە بۆ 5 خولەک دروستە.`
                 };
                 
-                const response = await emailjs.send(service_0mgxo9b, template_vgzbgin, templateParams);
+                // ئەم هێڵەی خوارەوە چارەسەرکراوە ✅
+                const response = await emailjs.send(SERVICE_ID, TEMPLATE_ID, templateParams);
                 console.log('EmailJS response:', response);
                 
                 showMessage(`✅ کۆد بە سەرکەوتوویی نێردرا بۆ ${email}`, 'success');
@@ -290,7 +291,7 @@
                 return true;
             } catch(error) {
                 console.error('EmailJS error:', error);
-                showMessage(`❌ ناردن سەرکەوتوو نەبوو: ${error.text || 'تکایە Template ID پشتڕاست بکەوە'}`, 'error');
+                showMessage(`❌ ناردن سەرکەوتوو نەبوو: ${error.text || 'تکایە دڵنیابە لە ڕێکخستنەکان'}`, 'error');
                 return false;
             }
         }
@@ -337,13 +338,11 @@
             
             if(userOtp === generatedOtp) {
                 verifiedEmail = email;
-                // ئیمەیڵ و OTP لە LocalStorage هەڵگرە بۆ پەڕەی دواتر
                 localStorage.setItem('verifiedEmail', email);
                 localStorage.setItem('isVerified', 'true');
                 
                 showMessage(`✅ پشتڕاستکرایەوە! ئێستا دەچیتە پەڕەی دواتر...`, 'success');
                 
-                // دوای 1 چرکە بڕۆ بۆ پەڕەی دواتر
                 setTimeout(() => {
                     window.location.href = 'dashboard.html';
                 }, 1000);
@@ -353,7 +352,6 @@
             }
         };
 
-        // ئۆتۆماتیکی پەڕاندن بۆ کادری OTP
         document.getElementById('otpCode').addEventListener('input', function(e) {
             this.value = this.value.replace(/[^0-9]/g, '').slice(0, 6);
         });
